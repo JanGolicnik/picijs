@@ -5,3 +5,5 @@ minimal web framework with routing, parameter parsing, sessions, auth and static
 check example for usage
 
 works well with [gss](https://github.com/JanGolicnik/gss), just put `render: gss.render` in pici config
+
+Licensed under GPLv3, see LICENSE
