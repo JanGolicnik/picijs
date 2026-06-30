@@ -103,6 +103,7 @@ export function create(config) {
   const routes = {
     GET: {
       ...parse_routes(config.get),
+      404: [() => error({ code: 404, data: "not found" })],
       public: [
         (req) => {
           const file = req.params.file;
@@ -123,19 +124,20 @@ export function create(config) {
     const url = new URL(req.url, `http://localhost`);
     const pathname =
       url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
-    let route;
-    if (req.method === "GET" && pathname.startsWith("/public/")) {
-      (req.params ??= {}).file = pathname.slice(1);
-      route = routes.GET.public;
-    } else {
-      route = routes[req.method]?.[pathname];
-    }
 
-    if (!route) {
-      res.writeHead(404);
-      res.end("Not found");
-      return;
-    }
+    const route =
+      (() => {
+        if (req.method === "GET" && pathname.startsWith("/public/")) {
+          (req.params ??= {}).file = pathname.slice(1);
+          if (
+            path.resolve(req.params.file).startsWith(path.resolve("public"))
+          ) {
+            return routes.GET.public;
+          }
+        } else {
+          return routes[req.method]?.[pathname];
+        }
+      })() ?? routes.GET["404"];
 
     req.params = { ...req.params, ...Object.fromEntries(url.searchParams) };
     req.body = await parse_body(req);
